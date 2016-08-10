@@ -17,7 +17,7 @@
 #' @param cor_vars A vector of correlations between variables.
 #' @param fact_vars A nested list of factor, categorical, or ordinal variable specification, 
 #'      each list must include numlevels and var_type (must be "lvl1" or "lvl2");
-#'      optional specifications are: replace, prob, value.labels.
+#'      optional specifications are: replace, prob, value.labels, effect_code.
 #' @export 
 sim_fixef_nested <- function(fixed, fixed_vars, cov_param, n, lvl1ss, data_str, 
                              cor_vars = NULL, fact_vars = list(NULL)){
@@ -75,7 +75,7 @@ sim_fixef_nested <- function(fixed, fixed_vars, cov_param, n, lvl1ss, data_str,
   if(length(fact.loc > 0)){
     fact_vars <- lapply(1:n.fact, function(xx) 
       list(k = NULL, n = n, p = lvl1ss, numlevels = fact_vars$numlevels[xx], 
-           var_type = fact_vars$var_type[xx]))
+           var_type = fact_vars$var_type[xx], effect_code = fact_vars$effect_code[xx]))
     Xmat <- cbind(Xmat, do.call("cbind", lapply(1:n.fact, 
               function(xx) do.call(sim_factor, fact_vars[[xx]]))))
   }
@@ -166,7 +166,7 @@ sim_fixef_nested3 <- function(fixed, fixed_vars, cov_param, k, n, p, data_str,
   if(length(fact.loc > 0)){
     fact_vars <- lapply(1:n.fact, function(xx) 
       list(k = k, n = n, p = p, numlevels = fact_vars$numlevels[xx], 
-           var_type = fact_vars$var_type[xx]))
+           var_type = fact_vars$var_type[xx], effect_code = fact_vars$effect_code[xx]))
     Xmat <- cbind(Xmat, do.call("cbind", lapply(1:n.fact, 
                 function(xx) do.call(sim_factor, fact_vars[[xx]]))))
   }
@@ -242,7 +242,7 @@ sim_fixef_single <- function(fixed, fixed_vars, n, cov_param, cor_vars = NULL,
     #op <- names(fact_vars)
     fact_vars <- lapply(1:n.fact, function(xx) 
       list(k = 0, n = n, p = 0, numlevels = fact_vars$numlevels[xx], 
-           var_type = fact_vars$var_type[xx]))
+           var_type = fact_vars$var_type[xx], effect_code = fact_vars$effect_code[xx]))
     Xmat <- cbind(Xmat, do.call("cbind", lapply(1:n.fact, 
             function(xx) do.call(sim_factor, fact_vars[[xx]]))))
   }
@@ -273,11 +273,12 @@ sim_fixef_single <- function(fixed, fixed_vars, n, cov_param, cor_vars = NULL,
 #'        converts variable to factor.
 #' @export 
 sim_factor <- function(k, n, p, numlevels, replace = TRUE, prob = NULL, var_type = c('lvl1', 'lvl2', 'lvl3', 'single'), 
-                       value.labels = NULL) {
+                       value.labels = NULL, effect_code = F) {
   
   #if(is.null(prob) == FALSE & (length(prob) == numlevels | length(prob) == length(numlevels)) == FALSE) {
   #  stop("prob must be same length as numlevels")
   #}
+  p <- p[1]
   if(var_type == 'single' | var_type == 'lvl2') {
     if(replace == FALSE & numlevels < n) {
       stop("If replace = FALSE, numlevels must be greater than n for lvl2 or single")
@@ -307,7 +308,12 @@ sim_factor <- function(k, n, p, numlevels, replace = TRUE, prob = NULL, var_type
     if(length(value.labels) != numlevels) { stop("value.labels must be same length as numlevels") }
     catVar <- factor(catVar, labels = value.labels)
   }
-  
+  if(effect_code == T) {
+    if(numlevels == 2) {
+      catVar <- ifelse( catVar==1, 1, ifelse( catVar==2, -1, NA ) )
+    }
+    else {stop("Effect coding of factor variables only currently available for 2-level factors.")}
+  }
   return(catVar)
 }
 
