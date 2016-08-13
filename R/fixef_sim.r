@@ -275,7 +275,7 @@ sim_fixef_single <- function(fixed, fixed_vars, n, cov_param, cor_vars = NULL,
 #'        converts variable to factor if numlevels is greater than 2.
 #' @export 
 sim_factor <- function(k, n, p, numlevels, replace = TRUE, prob = NULL, var_type = c('lvl1', 'lvl2', 'lvl3', 'single'), 
-                       value.labels = NULL, effect_code = F) {
+                       value.labels = NULL, effect_code = NULL) {
   
   #if(is.null(prob) == FALSE & (length(prob) == numlevels | length(prob) == length(numlevels)) == FALSE) {
   #  stop("prob must be same length as numlevels")
