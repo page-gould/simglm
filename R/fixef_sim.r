@@ -111,7 +111,7 @@ sim_fixef_nested <- function(fixed, fixed_vars, cov_param, n, lvl1ss, data_str,
 #' @param cor_vars A vector of correlations between variables.
 #' @param fact_vars A nested list of factor, categorical, or ordinal variable specification, 
 #'      each list must include numlevels and var_type (must be "lvl1", "lvl2", or "lvl3");
-#'      optional specifications are: replace, prob, value.labels.
+#'      optional specifications are: replace, prob, value.labels, effect_code.
 #' @export 
 sim_fixef_nested3 <- function(fixed, fixed_vars, cov_param, k, n, p, data_str, 
                              cor_vars = NULL, fact_vars = list(NULL)){
@@ -197,7 +197,7 @@ sim_fixef_nested3 <- function(fixed, fixed_vars, cov_param, k, n, p, data_str,
 #' @param cor_vars A vector of correlations between variables.
 #' @param fact_vars A nested list of factor, categorical, or ordinal variable specification, 
 #'      each list must include numlevels and var_type (must be "lvl1" or "lvl2");
-#'      optional specifications are: replace, prob, value.labels.
+#'      optional specifications are: replace, prob, value.labels, effect_code.
 #' @export 
 sim_fixef_single <- function(fixed, fixed_vars, n, cov_param, cor_vars = NULL, 
                              fact_vars = list(NULL)){
@@ -271,6 +271,8 @@ sim_fixef_single <- function(fixed, fixed_vars, n, cov_param, cor_vars = NULL,
 #' @param var_type Variable type for the variable, must be either "lvl1", "lvl2", or "single"
 #' @param value.labels Optional argument with value labels for variable, 
 #'        converts variable to factor.
+#' @param effect_code Optional argument stating whether to effect-code factors, TRUE/FALSE,
+#'        converts variable to factor if numlevels is greater than 2.
 #' @export 
 sim_factor <- function(k, n, p, numlevels, replace = TRUE, prob = NULL, var_type = c('lvl1', 'lvl2', 'lvl3', 'single'), 
                        value.labels = NULL, effect_code = F) {
@@ -308,11 +310,20 @@ sim_factor <- function(k, n, p, numlevels, replace = TRUE, prob = NULL, var_type
     if(length(value.labels) != numlevels) { stop("value.labels must be same length as numlevels") }
     catVar <- factor(catVar, labels = value.labels)
   }
-  if(effect_code == T) {
+  
+  if(is.null(value.labels) == FALSE && effect_code == T) {
     if(numlevels == 2) {
       catVar <- ifelse( catVar==1, 1, ifelse( catVar==2, -1, NA ) )
     }
-    else {stop("Effect coding of factor variables only currently available for 2-level factors.")}
+    else {
+      contrast.matrix <- rbind( matrix(rep( -1, numlevels - 1 ), ncol=numlevels - 1, nrow=1 ), 
+                              matrix( rep( 0, (numlevels - 1)**2 ), nrow=numlevels - 1, ncol=(numlevels - 1) ) )
+      for (level in 2:numlevels) {
+        contrast.matrix[level, level - 1] <- 1
+      }
+      catVar <- factor( catVar )
+      contrasts( catVar ) <- contrast.matrix
+    }
   }
   return(catVar)
 }
