@@ -79,7 +79,6 @@ sim_fixef_nested <- function(fixed, fixed_vars, cov_param, n, lvl1ss, data_str,
     Xmat <- cbind(Xmat, do.call("cbind", lapply(1:n.fact, 
               function(xx) do.call(sim_factor, fact_vars[[xx]]))))
   }
-  
    if(n.int == 0){
      colnames(Xmat) <- fixed_vars
    } else {
@@ -271,11 +270,10 @@ sim_fixef_single <- function(fixed, fixed_vars, n, cov_param, cor_vars = NULL,
 #' @param var_type Variable type for the variable, must be either "lvl1", "lvl2", or "single"
 #' @param value.labels Optional argument with value labels for variable, 
 #'        converts variable to factor.
-#' @param effect_code Optional argument stating whether to effect-code factors, TRUE/FALSE,
-#'        converts variable to factor if numlevels is greater than 2.
+#' @param effect_code Optional argument stating whether to effect-code 2-level factors (i.e., using -1 and 1), TRUE/FALSE.
 #' @export 
 sim_factor <- function(k, n, p, numlevels, replace = TRUE, prob = NULL, var_type = c('lvl1', 'lvl2', 'lvl3', 'single'), 
-                       value.labels = NULL, effect_code = NULL) {
+                       value.labels = NULL, effect_code = F) {
   
   #if(is.null(prob) == FALSE & (length(prob) == numlevels | length(prob) == length(numlevels)) == FALSE) {
   #  stop("prob must be same length as numlevels")
@@ -311,18 +309,12 @@ sim_factor <- function(k, n, p, numlevels, replace = TRUE, prob = NULL, var_type
     catVar <- factor(catVar, labels = value.labels)
   }
   
-  if(is.null(value.labels) == FALSE && effect_code == T) {
+  if(!is.null(effect_code) && effect_code == T) {
     if(numlevels == 2) {
       catVar <- ifelse( catVar==1, 1, ifelse( catVar==2, -1, NA ) )
     }
     else {
-      contrast.matrix <- rbind( matrix(rep( -1, numlevels - 1 ), ncol=numlevels - 1, nrow=1 ), 
-                              matrix( rep( 0, (numlevels - 1)**2 ), nrow=numlevels - 1, ncol=(numlevels - 1) ) )
-      for (level in 2:numlevels) {
-        contrast.matrix[level, level - 1] <- 1
-      }
-      catVar <- factor( catVar )
-      contrasts( catVar ) <- contrast.matrix
+      stop("Effect-coding currently only available for 2-level factor variables.")
     }
   }
   return(catVar)
